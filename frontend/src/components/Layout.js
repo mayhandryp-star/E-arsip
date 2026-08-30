@@ -8,6 +8,7 @@ import {
   Gear,
   SignOut,
   Archive,
+  UserCircle,
 } from "@phosphor-icons/react";
 
 const navItems = [
@@ -16,6 +17,7 @@ const navItems = [
   { to: "/cari", label: "Cari Arsip", icon: MagnifyingGlass, admin: false },
   { to: "/hapus", label: "Hapus Arsip", icon: Trash, admin: true },
   { to: "/pengaturan", label: "Pengaturan", icon: Gear, admin: true },
+  { to: "/profil", label: "Profil", icon: UserCircle, admin: false },
 ];
 
 export default function Layout({ children }) {

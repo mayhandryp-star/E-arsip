@@ -9,6 +9,7 @@ import TambahArsip from "@/pages/TambahArsip";
 import CariArsip from "@/pages/CariArsip";
 import HapusArsip from "@/pages/HapusArsip";
 import Pengaturan from "@/pages/Pengaturan";
+import Profil from "@/pages/Profil";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/cari" element={<ProtectedRoute><CariArsip /></ProtectedRoute>} />
           <Route path="/hapus" element={<ProtectedRoute adminOnly><HapusArsip /></ProtectedRoute>} />
           <Route path="/pengaturan" element={<ProtectedRoute adminOnly><Pengaturan /></ProtectedRoute>} />
+          <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>

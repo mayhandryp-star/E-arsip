@@ -87,6 +87,11 @@ class LoginInput(BaseModel):
     password: str
 
 
+class ChangePasswordInput(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class UserCreate(BaseModel):
     username: str
     password: str
@@ -206,6 +211,18 @@ async def logout(response: Response):
 @api_router.get("/auth/me")
 async def me(user: dict = Depends(get_current_user)):
     return {"id": user["id"], "username": user["username"], "name": user.get("name", ""), "role": user["role"]}
+
+
+@api_router.post("/auth/change-password")
+async def change_password(data: ChangePasswordInput, user: dict = Depends(get_current_user)):
+    if len(data.new_password) < 4:
+        raise HTTPException(status_code=400, detail="Password baru minimal 4 karakter")
+    doc = await db.users.find_one({"_id": oid(user["id"])})
+    if not doc or not verify_password(data.current_password, doc["password_hash"]):
+        raise HTTPException(status_code=400, detail="Password saat ini salah")
+    await db.users.update_one({"_id": oid(user["id"])},
+                              {"$set": {"password_hash": hash_password(data.new_password)}})
+    return {"message": "Password berhasil diubah"}
 
 
 # ---------------- User management (admin) ----------------

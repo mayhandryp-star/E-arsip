@@ -57,7 +57,7 @@ function UsersTab() {
   const [target, setTarget] = useState(null);
 
   const load = () => api.get("/users").then((r) => setUsers(r.data)).catch(() => {});
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
