@@ -1,0 +1,54 @@
+{
+  "summary": "Full backend + frontend E2E test of Arsip Digital. Backend: 32 pytest cases across auth, users, archive-types, archive-locations, archives CRUD, PDF upload/download via Emergent object storage, stats, and RBAC -> 28 passed / 4 failed (all 4 are unhandled-500 robustness bugs). Frontend: all 9 requested flows verified via Playwright on the public preview URL and ALL PASSED - admin login + wrong-password error, 5 stats cards, Tambah Arsip with PDF + success toast + form reset, Cari Arsip search/Buka/Unduh/Ubah edit persisted, Hapus Arsip with confirm dialog, Pengaturan (create user, add+delete jenis, add+delete lokasi), regular-user role gating (Hapus/Pengaturan menus hidden, direct URL /hapus and /pengaturan redirect to /dashboard, no 'Ubah' button, but Tambah + Buka + Unduh work), and logout redirect to /login.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "GET /api/archives?nomor=([a", "issue": "Search params are injected directly into a MongoDB $regex without escaping. Special regex chars (e.g. '([a') raise re.error inside PyMongo and return HTTP 500. Also a ReDoS/regex-injection vector. Fix: re.escape() the user input.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "GET/PUT/DELETE /api/archives/{id}", "issue": "ObjectId(archive_id) is called on raw path param -> bson.errors.InvalidId uncaught -> HTTP 500 for any malformed id (e.g. /api/archives/abc123). Should return 400/404."},
+      {"endpoint": "DELETE /api/archive-types/{id}", "issue": "Same unvalidated ObjectId -> 500 instead of 400/404."},
+      {"endpoint": "DELETE /api/archive-locations/{id}", "issue": "Same unvalidated ObjectId -> 500 instead of 400/404."},
+      {"endpoint": "DELETE /api/users/{id}", "issue": "Same unvalidated ObjectId pattern (not asserted but identical code path) -> will 500 on malformed id."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "CariArsip / HapusArsip edit+delete dialogs", "issues": ["React a11y console warning: 'Missing `Description` or `aria-describedby={undefined}` for {DialogContent}' on the Ubah dialog - add AlertDialogDescription/aria-describedby."]},
+      {"screen": "Global toast (sonner)", "issues": ["A success toast from Tambah Arsip was still visible after logout + re-login as a different user; consider clearing toasts on route/auth change (cosmetic)."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/conftest.py",
+    "/app/backend/tests/cleanup_test_data.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Escape user input with re.escape() before building the $regex in GET /api/archives (currently returns 500 on regex metacharacters).",
+    "Add a shared helper to validate/parse ObjectId path params (ObjectId.is_valid) and raise HTTPException(400/404) instead of letting bson.InvalidId bubble to a 500. Applies to archives GET/PUT/DELETE, archive-types DELETE, archive-locations DELETE, users DELETE.",
+    "Add AlertDialogDescription/aria-describedby to the CariArsip Ubah DialogContent to clear the React a11y warning."
+  ],
+  "critical_code_review_comments": [
+    "server.py: no ObjectId validation anywhere - every {id} route is a guaranteed 500 on malformed input.",
+    "search_archives builds $regex from raw query strings: regex injection + 500s. Use re.escape().",
+    "update_archive computes `old = doc.get('stored_file')` but never deletes the replaced object from object storage -> orphaned PDFs leak on every edit; delete_archive likewise leaves the stored PDF behind.",
+    "No password strength/length validation on POST /api/users (empty password is rejected, but '1' is accepted).",
+    "Playbook items not implemented (may be out of scope for this username-based design): no brute-force lockout after N failed logins, no forgot/reset-password flow. Login is unthrottled, and the default admin/admin credentials are printed on the login page - flag for production.",
+    "seed_admin behaviour is correct: it re-hashes and updates the existing admin when ADMIN_PASSWORD changes (verified in code); admin hash confirmed bcrypt '$2b$'.",
+    "CORS uses an explicit FRONTEND_URL origin with allow_credentials=True (good), and login sets an httpOnly+Secure+SameSite=None cookie (verified in response headers)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/conftest.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/cleanup_test_data.py"
+  ],
+  "success_rate": {"backend": "87.5% (28/32)", "frontend": "100% of the 9 requested flows"},
+  "seed_data_creation": "All test data was created with TEST_ / test_ prefixes and removed afterwards via /app/backend/tests/cleanup_test_data.py (archives TEST_*, users test_ui_*, jenis/lokasi TEST_*). No seeded data modified.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "admin/admin (from /app/memory/test_credentials.md, works). Regular users created during test were cleaned up; recreate via Pengaturan > Input User if needed.",
+  "context_for_next_testing_agent": "Backend suite lives at /app/backend/tests/ (conftest.py fixtures: api_client, admin_token, admin_client, test_credentials parsed from /app/memory/test_credentials.md). Run: cd /app/backend/tests && pytest . -v --junitxml=/app/test_reports/pytest/pytest_results.xml. The only 4 failing tests are test_get_invalid_objectid, test_delete_invalid_objectid[types/locations] and test_search_regex_injection_safe - all 500s from unvalidated input; they will pass once the ObjectId/re.escape fixes land. Playwright gotchas: Pengaturan role select options read 'User (input, buka, unduh)' / 'Admin (akses penuh)' (NOT 'Pengguna'); default is already 'user' so no selection needed. Jenis/Lokasi delete confirm uses a generic [role=alertdialog] button 'Hapus' (no data-testid on that confirm button - consider adding one). Named-item testids: types-input/add-types-button/types-list/types-item-{id}/delete-types-{id} (same with 'locations').",
+  "rca_of_the_issue": "Both failure classes are missing input validation in /app/backend/server.py. (1) Every {id} route calls bson ObjectId(id) directly; a non-hex id raises bson.errors.InvalidId which FastAPI converts to a 500 (confirmed in /var/log/supervisor/backend.err.log: \"bson.errors.InvalidId: 'abc123' is not a valid ObjectId\"). Repro: GET /api/archives/abc123 with a valid admin Bearer token -> 500. (2) search_archives passes the raw nomor/nama query strings into {\"$regex\": value}; unbalanced regex metacharacters raise re.error -> 500. Repro: GET /api/archives?nomor=([a -> 500. Mitigation: guard with ObjectId.is_valid() (raise 400) and wrap search terms in re.escape()."
+}

@@ -1,0 +1,83 @@
+{
+  "theme": "light",
+  "language": "Indonesian",
+  "project_name": "Arsip Digital",
+  "typography": {
+    "fonts": {
+      "headings": "Manrope",
+      "body": "IBM Plex Sans",
+      "mono": "JetBrains Mono"
+    },
+    "hierarchy": {
+      "h1": "text-3xl sm:text-4xl tracking-tight font-bold",
+      "h2": "text-xl sm:text-2xl tracking-tight font-semibold",
+      "h3": "text-lg font-medium",
+      "body": "text-sm leading-relaxed",
+      "label": "text-xs font-semibold uppercase tracking-[0.1em] text-neutral-500"
+    }
+  },
+  "colors": {
+    "archetype": "ARCHETYPE 4: SWISS & HIGH-CONTRAST (Authority, Clarity, Truth)",
+    "palette": {
+      "background": "#FAFAFA",
+      "surface": "#FFFFFF",
+      "text_primary": "#171717",
+      "text_secondary": "#525252",
+      "border": "#E5E5E5",
+      "primary": "#171717",
+      "primary_hover": "#262626",
+      "accent": "#2563EB",
+      "destructive": "#DC2626"
+    },
+    "instructions": "Use high-contrast monochrome as base. Color is used ONLY for function. Use tint of gray, never pure black/gray."
+  },
+  "layouts": {
+    "general": "High Density Grid optimized for web app dashboards. Minimalist and professional.",
+    "dashboard": "Flex layout with w-64 fixed sidebar, h-screen sticky. Main content takes remaining width. Use p-6 or p-8 for main containers to ensure generous spacing.",
+    "bento_grid": "For the 'Tambah Arsip' form, utilize a bento-style grid structure (grid-cols-1 md:grid-cols-2 gap-6) to break up inputs instead of a massive single column.",
+    "borders": "Expose the skeleton. Use 'Grid Borders' style with border-collapse and subtle borders."
+  },
+  "components": {
+    "sidebar": "Flat surface, no shadow, border-r border-neutral-200. Active states get a subtle bg-neutral-100 and font-medium.",
+    "tables": "Shadcn Table. Flat solid surfaces with 1px subtle borders. Max 4px border-radius (rounded-sm). Left-align all textual data.",
+    "buttons": "Rounded-sm corners. Dark/Black for primary actions (Tambah Arsip). Minimal padding, crisp borders.",
+    "forms": "Use Shadcn components exclusively for interactive logic. Labels must be uppercase and tracked out (tracking-[0.1em]). Inputs should have sharp borders (border-neutral-300 focus:border-neutral-900 focus:ring-1).",
+    "toast": "Use Sonner for success/error notifications ('Arsip berhasil ditambahkan').",
+    "modals": "Use Shadcn Dialog with solid white background, 1px border, and a subtle backdrop-blur for overlay."
+  },
+  "visual_enhancers": {
+    "shadows": "Minimal. Avoid soft UI blobs. When shadows are needed (dropdowns, dialogs), use sharp, deliberate ambient shadows: shadow-[0_4px_24px_rgba(0,0,0,0.06)].",
+    "icons": "Use @phosphor-icons/react for a dense, professional tech look."
+  },
+  "motion": {
+    "interactions": "Micro-interactions on hover for table rows (bg-neutral-50) and buttons (subtle bg shifts).",
+    "transitions": "Use specific properties (transition-colors duration-200, transition-transform). NO transition-all."
+  },
+  "accessibility": {
+    "contrast": "Ensure min 4.5:1 ratio. Text colors MUST be explicitly set on hover/focus states.",
+    "testing": "All interactive elements MUST include data-testid attribute (e.g., data-testid='login-submit-button', data-testid='search-archive-input')."
+  },
+  "instructions_to_main_agent": [
+    "Build a React (JS, not TSX) + Tailwind + Shadcn application.",
+    "All UI Text MUST be in Indonesian as requested.",
+    "Dependencies to add: react-router-dom, @phosphor-icons/react, sonner.",
+    "Authentication (Login Page): Implement JWT-style Login UI. Clean split layout or centered minimalist card. Hardcode admin/admin check for prototype if no backend provided.",
+    "Layout Shell: Build a Sidebar containing menus: Dashboard, Tambah Arsip, Cari Arsip, Pengaturan.",
+    "Menu 1 - Tambah Arsip: Form for nomor arsip, nama arsip, jenis arsip, lokasi arsip, and upload arsip (PDF). Use Shadcn forms.",
+    "Menu 2 - Cari Arsip: Search input by nomor/nama. Table displaying results. Action column with 'Ubah' (Edit) button opening a pre-filled form (via Modal or dedicated page).",
+    "Menu 3 - Hapus Arsip: Similar to Cari Arsip, but action column has 'Hapus' (Delete) button that triggers a Shadcn Alert Dialog.",
+    "Menu 4 - Pengaturan: Settings page using Shadcn Tabs for 'Input User', 'Jenis Arsip', and 'Lokasi Arsip'.",
+    "Implement Role checking visually if applicable (e.g., Hapus Arsip only visible/enabled for admin).",
+    "Do NOT use generic Vercel/Stripe gradient cards. Keep surfaces solid, flat, and brutalist-adjacent.",
+    "Provide clear Empty States for the tables if no archives are found."
+  ],
+  "universal_guidelines_for_main_agent": [
+    "Do not use transparent backgrounds for headers, dropdowns, or modals where content can scroll underneath.",
+    "Avoid center aligning layouts for dense information; always use left alignment for forms and data.",
+    "Create new components in src/components/ui/ following existing Shadcn aesthetic.",
+    "Never use generic AI emojis in the UI. Rely on Phosphor icons.",
+    "Ensure hover states explicitly declare text colors (e.g., hover:bg-neutral-900 hover:text-white).",
+    "Do not apply `transition: all` in CSS.",
+    "The application code will be in standard JS (.js/.jsx), not TypeScript."
+  ]
+}
